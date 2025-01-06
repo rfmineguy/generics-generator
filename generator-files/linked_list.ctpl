@@ -1,0 +1,16 @@
+#include "linked_list.h"
+
+ll_T ll_T_new() {
+	return (ll_T) {0};
+}
+
+void ll_T_free(ll_T* ll) {
+	ll_node_T* n = ll->head;
+	while (n) {
+		ll_node_T* t = n;
+		n = n->next;
+		free(t);
+	}
+	ll->head = 0;
+	ll->tail = 0;
+}
