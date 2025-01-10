@@ -1,47 +1,34 @@
 const std = @import("std");
 const yazap = @import("yazap");
-const toml = @import("toml-zig");
+const template = @import("template.zig");
+const cmdline = @import("cmdline.zig");
 
-const alloc = std.heap.page_allocator;
 const App = yazap.App;
-const Arg = yazap.Arg;
+const Allocator = std.mem.Allocator;
 
 /// generics-generator
-/// usage: generics-generator <adt> <args>
+/// usage: generics-generator --tpl=<tpl> <args>
 ///
-/// adt:
-///     linked_list
-///     binary_tree
-///     max_heap
-///     min_heap
+/// tpl:
+///     dynamically populated based on
+///     config dir
 ///
-///
-///
+pub const known_folders_config = .{ .xdg_on_mac = true };
+
 pub fn main() anyerror!void {
+    const alloc = std.heap.page_allocator;
+    const files = try template.get_template_files(alloc);
+    defer for (files.items) |file| alloc.free(file);
+    for (files.items) |file| {
+        const t = try template.Template.parse(alloc, file);
+        std.debug.print("{}\n", .{t});
+    }
+
     var app = App.init(alloc, "generics-gen", null);
     defer app.deinit();
 
-    var generics_gen = app.rootCommand();
-    generics_gen.setProperty(.help_on_empty_args);
-
-    var cmd_linked_list = app.createCommand("linked_list", "Create linked list");
-    try cmd_linked_list.addArgs(&[_]Arg{Arg.singleValueOption("datatype", 'd', "Which datatype this linked list manages")});
-
-    var cmd_binary_tree = app.createCommand("binary_tree", "Create linked list adt");
-    try cmd_binary_tree.addArgs(&[_]Arg{Arg.singleValueOption("datatype", 'd', "The underlying data type")});
-
-    try generics_gen.addSubcommand(cmd_linked_list);
-    try generics_gen.addSubcommand(cmd_binary_tree);
+    try cmdline.create_cmdline_args(&app);
 
     const matches = try app.parseProcess();
-    if (matches.subcommandMatches("linked_list")) |llist| {
-        if (llist.getSingleValue("datatype")) |arg| {
-            std.debug.print("Datatype: {s}", .{arg});
-        }
-    }
-    if (matches.subcommandMatches("binary_tree")) |llist| {
-        if (llist.getSingleValue("datatype")) |arg| {
-            std.debug.print("Datatype: {s}", .{arg});
-        }
-    }
+    _ = matches;
 }
