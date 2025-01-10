@@ -4,11 +4,18 @@ const known_folders = @import("known-folders");
 const toml = @import("zig_toml");
 const Allocator = std.mem.Allocator;
 
+const ArgType = enum { symbol, def };
+const Arg = struct {
+    name: []const u8 = undefined,
+    symbol: []const u8 = undefined,
+    def: ?[]const u8 = null,
+};
+
 // represents <adt>.tpl
 pub const Template = struct {
     name: ?[]u8 = null,
-    datatype: ?[]u8 = null,
     generators: std.ArrayList([]const u8) = undefined,
+    args: std.ArrayList(Arg) = undefined,
 
     pub fn parse(alloc: Allocator, path: []const u8) !@This() {
         var parser = try toml.parseFile(alloc, path);
@@ -18,14 +25,15 @@ pub const Template = struct {
         defer table.deinit();
 
         var ret = @This(){};
+        ret.args = std.ArrayList(Arg).init(alloc);
         if (table.keys.get("name")) |name| {
             if (name != .String) return error.malformed_name;
             ret.name = try alloc.dupe(u8, name.String);
         }
-        if (table.keys.get("datatype")) |datatype| {
-            if (datatype != .String) return error.malformed_datatype;
-            ret.datatype = try alloc.dupe(u8, datatype.String);
-        }
+        // if (table.keys.get("datatype")) |datatype| {
+        //     if (datatype != .String) return error.malformed_datatype;
+        //     ret.datatype = try alloc.dupe(u8, datatype.String);
+        // }
         if (table.keys.get("generators")) |generators| {
             if (generators != .Array) return error.malformed_generators_array;
             ret.generators = std.ArrayList([]const u8).init(alloc);
@@ -35,18 +43,46 @@ pub const Template = struct {
                 try ret.generators.append(t);
             }
         }
+        if (table.keys.get("args")) |arg| {
+            if (arg != .Table) return error.malformed_args_table;
+            var args_it = arg.Table.keys.iterator();
+            while (args_it.next()) |entry| {
+                if (entry.value_ptr.* != .Table) return error.malformed_arg;
+                const arg_entry_table = entry.value_ptr.Table;
+                std.debug.print("arg: {s}\n", .{entry.key_ptr.*});
+                var arg_entry_it = arg_entry_table.keys.iterator();
+                var argument: Arg = .{};
+                argument.name = try alloc.dupe(u8, entry.key_ptr.*);
+                while (arg_entry_it.next()) |arg_entry| {
+                    if (arg_entry.value_ptr.* != .String) return error.malformed_arg;
+                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "symbol"))
+                        argument.symbol = try alloc.dupe(u8, arg_entry.value_ptr.String);
+                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "default"))
+                        argument.def = try alloc.dupe(u8, arg_entry.value_ptr.String);
+                }
+                try ret.args.append(argument);
+            }
+        }
         return ret;
     }
 
     pub fn format(self: @This(), comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("Template(", .{});
-        try writer.print("name: {?s}, ", .{self.name});
-        try writer.print("datatype: {?s}, ", .{self.datatype});
-        try writer.print("generators: [", .{});
+        try writer.print("Template(\n", .{});
+        try writer.print("  name: {?s},\n", .{self.name});
+        try writer.print("  args: [\n", .{});
+        for (self.args.items) |arg| {
+            try writer.print("   {s} {{", .{arg.name});
+            try writer.print("symbol = {?s}, ", .{arg.symbol});
+            try writer.print("default = {?s}, ", .{arg.def});
+            try writer.print("}}\n", .{});
+        }
+        try writer.print("  ]\n", .{});
+        try writer.print("  generators: [", .{});
         for (self.generators.items) |generator| try writer.print("{s}, ", .{generator});
-        try writer.print("])", .{});
+        try writer.print("]\n", .{});
+        try writer.print(")\n", .{});
     }
 };
 
