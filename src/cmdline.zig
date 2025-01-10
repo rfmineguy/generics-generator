@@ -1,5 +1,13 @@
 const yazap = @import("yazap");
+const template = @import("template.zig");
 const Arg = yazap.Arg;
+
+pub fn create_adt_command(app: *yazap.App, t: template.Template) !yazap.Command {
+    var command = app.createCommand(t.name.?, "");
+    try command.addArg(Arg.singleValueOption("datatype", 'd', "The underlying datatype"));
+
+    return command;
+}
 
 pub fn create_cmdline_args(app: *yazap.App) !void {
     var generics_gen = app.rootCommand();
