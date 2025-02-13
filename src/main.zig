@@ -1,4 +1,5 @@
 const std = @import("std");
+const known_folders = @import("known-folders");
 const template = @import("template.zig");
 const yazap = @import("yazap");
 const cmdline = @import("cmdline.zig");
@@ -31,7 +32,6 @@ pub fn main() anyerror!void {
         alloc.free(file.name);
     };
     for (files.items) |file| {
-        // std.debug.print("{}\n", .{file});
         const t = try template.Template.parse(alloc, file.fullpath);
         try templates.put(file.name, t);
         if (try cmdline.create_adt_command(&app, t, alloc)) |command| {
@@ -39,14 +39,9 @@ pub fn main() anyerror!void {
         }
     }
 
-    // var it = templates.iterator();
-    // while (it.next()) |entry| {
-    //     std.debug.print("{s}, {?}\n", .{ entry.key_ptr.*, entry.value_ptr.* });
-    // }
-
     // 3. Cmdline parsing
     // Parse the app struct and
-    // process the results
+    // process the results into the final template values
     const matches = app.parseProcess() catch |e| {
         std.debug.print("Error: {}\n", .{e});
         std.process.exit(1);
@@ -68,4 +63,29 @@ pub fn main() anyerror!void {
         }
     }
     std.debug.print("{?}\n", .{tplt});
+
+    // 4. Use the data in tplt to do the replacements in the template files
+    for (tplt.?.generators.items) |generator_file| {
+        const home = try known_folders.getPath(alloc, .local_configuration) orelse "";
+        const path = try std.fs.path.join(alloc, &[_][]const u8{ home, "generics", generator_file });
+        var file = try std.fs.cwd().openFile(path, .{});
+        defer file.close();
+        const stat = try file.stat();
+        const contents = try file.readToEndAlloc(alloc, stat.size);
+        std.debug.print("{s}\n", .{path});
+        std.debug.print("{s}\n", .{contents});
+
+        // 5. perform replacements
+        var result = try alloc.dupe(u8, contents);
+        for (tplt.?.args.items) |arg| {
+            const old = arg.symbol;
+            const new = arg.value;
+            const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
+            alloc.free(result);
+            result = temp;
+        }
+
+        std.debug.print("Result: {s}\n", .{result});
+        alloc.free(result);
+    }
 }
