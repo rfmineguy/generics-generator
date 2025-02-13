@@ -23,15 +23,12 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        .yazap = .{
-            .url = "git+https://github.com/prajwalch/yazap#c2e3122d5dd6192513ba590f229dbc535110efb8",
-            .hash = "122054439ec36ac10987c87ae69f3b041b40b2e451af3fe3ef1fc578b3bad756a800",
-        },
         .zig_toml = .{ .path = "./libs/zig-toml/" },
         .@"known-folders" = .{
             .url = "git+https://github.com/ziglibs/known-folders.git#1cceeb70e77dec941a4178160ff6c8d05a74de6f",
             .hash = "12205f5e7505c96573f6fc5144592ec38942fb0a326d692f9cddc0c7dd38f9028f29",
         },
+        .yazap = .{ .path = "./libs/yazap/" },
     },
     .paths = .{
         "build.zig",

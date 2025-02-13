@@ -36,12 +36,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const yazap = b.dependency("yazap", .{});
-    exe.root_module.addImport("yazap", yazap.module("yazap"));
     const toml_dep = b.dependency("zig_toml", .{});
     exe.root_module.addImport("zig_toml", toml_dep.module("toml"));
     const known_folders = b.dependency("known-folders", .{}).module("known-folders");
     exe.root_module.addImport("known-folders", known_folders);
+    const yazap = b.dependency("yazap", .{});
+    exe.root_module.addImport("yazap", yazap.module("yazap"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
