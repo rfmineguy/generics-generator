@@ -1,10 +1,16 @@
 const yazap = @import("yazap");
 const template = @import("template.zig");
 const Arg = yazap.Arg;
+const std = @import("std");
 
-pub fn create_adt_command(app: *yazap.App, t: template.Template) !yazap.Command {
-    var command = app.createCommand(t.name.?, "");
-    try command.addArg(Arg.singleValueOption("datatype", 'd', "The underlying datatype"));
+pub fn create_adt_command(app: *yazap.App, t: template.Template, alloc: std.mem.Allocator) !?yazap.Command {
+    var command = if (t.name) |name| app.createCommand(name, "") else return null;
+
+    for (t.args.items) |arg| {
+        // NOTE: Memory leaks?
+        const desc = if (arg.def) |d| try std.fmt.allocPrint(alloc, "default = {s}", .{d}) else "";
+        try command.addArg(Arg.singleValueOption(arg.name, arg.name[0], desc));
+    }
 
     return command;
 }
