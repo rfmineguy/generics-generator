@@ -9,6 +9,17 @@ const Arg = struct {
     name: []const u8 = undefined,
     symbol: []const u8 = undefined,
     def: ?[]const u8 = null,
+    value: []const u8 = undefined,
+
+    pub fn format(self: @This(), comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("   {s} {{", .{self.name});
+        try writer.print("symbol = {?s}, ", .{self.symbol});
+        try writer.print("default = {?s}, ", .{self.def});
+        try writer.print("value = {?s}, ", .{self.value});
+        try writer.print("}}", .{});
+    }
 };
 
 // represents <adt>.tpl
@@ -30,10 +41,6 @@ pub const Template = struct {
             if (name != .String) return error.malformed_name;
             ret.name = try alloc.dupe(u8, name.String);
         }
-        // if (table.keys.get("datatype")) |datatype| {
-        //     if (datatype != .String) return error.malformed_datatype;
-        //     ret.datatype = try alloc.dupe(u8, datatype.String);
-        // }
         if (table.keys.get("generators")) |generators| {
             if (generators != .Array) return error.malformed_generators_array;
             ret.generators = std.ArrayList([]const u8).init(alloc);
@@ -49,7 +56,6 @@ pub const Template = struct {
             while (args_it.next()) |entry| {
                 if (entry.value_ptr.* != .Table) return error.malformed_arg;
                 const arg_entry_table = entry.value_ptr.Table;
-                std.debug.print("arg: {s}\n", .{entry.key_ptr.*});
                 var arg_entry_it = arg_entry_table.keys.iterator();
                 var argument: Arg = .{};
                 argument.name = try alloc.dupe(u8, entry.key_ptr.*);
@@ -73,10 +79,7 @@ pub const Template = struct {
         try writer.print("  name: {?s},\n", .{self.name});
         try writer.print("  args: [\n", .{});
         for (self.args.items) |arg| {
-            try writer.print("   {s} {{", .{arg.name});
-            try writer.print("symbol = {?s}, ", .{arg.symbol});
-            try writer.print("default = {?s}, ", .{arg.def});
-            try writer.print("}}\n", .{});
+            try writer.print("{}", .{arg});
         }
         try writer.print("  ]\n", .{});
         try writer.print("  generators: [", .{});
@@ -86,7 +89,12 @@ pub const Template = struct {
     }
 };
 
-pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList([]u8) {
+pub const TemplateFile = struct {
+    fullpath: []const u8,
+    name: []const u8,
+};
+
+pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile) {
     const home = try known_folders.getPath(alloc, .local_configuration) orelse "";
     const path = try std.fs.path.join(alloc, &[_][]const u8{ home, "generics" });
     std.fs.cwd().makeDir(path) catch {};
@@ -97,12 +105,16 @@ pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList([]u8) {
     var walker = try dir.walk(alloc);
     defer walker.deinit();
 
-    var filepaths = std.ArrayList([]u8).init(alloc);
+    var filepaths = std.ArrayList(TemplateFile).init(alloc);
     while (try walker.next()) |entry| {
         if (entry.kind != .file) continue;
         const extension = std.fs.path.extension(entry.path);
         if (std.mem.eql(u8, extension, ".tpl")) {
-            try filepaths.append(try dir.realpathAlloc(alloc, entry.path));
+            var basename = try alloc.dupe(u8, std.fs.path.basename(entry.path));
+            try filepaths.append(.{
+                .fullpath = try dir.realpathAlloc(alloc, entry.path),
+                .name = if (std.mem.lastIndexOfScalar(u8, basename, '.')) |idx| basename[0..idx] else basename,
+            });
         }
     }
     return filepaths;
