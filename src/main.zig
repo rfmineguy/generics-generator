@@ -1,6 +1,6 @@
 const std = @import("std");
-const yazap = @import("yazap");
 const template = @import("template.zig");
+const yazap = @import("yazap");
 const cmdline = @import("cmdline.zig");
 
 const App = yazap.App;
@@ -17,32 +17,55 @@ pub const known_folders_config = .{ .xdg_on_mac = true };
 const alloc = std.heap.page_allocator;
 pub fn main() anyerror!void {
     // 1. Create yazap app struct
-    var app = App.init(alloc, "generics-gen", null);
+    var app = App.init(alloc, "generics-gen", "Generics generator");
     defer app.deinit();
 
-    // 2. Populate yazap app with
+    // 2. Cmdline setup
+    // Populate yazap app with
     // commands parsed from the config
     // dir
+    var templates = std.StringHashMap(template.Template).init(alloc);
     const files = try template.get_template_files(alloc);
-    defer for (files.items) |file| alloc.free(file);
+    defer for (files.items) |file| {
+        alloc.free(file.fullpath);
+        alloc.free(file.name);
+    };
     for (files.items) |file| {
-        const t = try template.Template.parse(alloc, file);
-        const command = try cmdline.create_adt_command(&app, t);
-        try app.rootCommand().addSubcommand(command);
-    }
-
-    // 3. Parse the app struct and
-    // process the results
-    const matches = try app.parseProcess();
-    const subcmd = matches.parse_result.subcmd_parse_result;
-    const name = subcmd.?.getCommand().deref().name;
-    _ = name;
-    var it = subcmd.?.getArgs().iterator();
-    while (it.next()) |arg| {
-        switch (arg.value_ptr.*) {
-            .single => std.debug.print("arg single '{s}' is '{s}'\n", .{ arg.key_ptr.*, arg.value_ptr.*.single }),
-            .many => std.debug.print("ERROR: arg type many for '{}' not suppored\n", .{arg.key_ptr}),
-            .none => std.debug.print("ERROR: arg type none for '{}' not suppored\n", .{arg.key_ptr}),
+        // std.debug.print("{}\n", .{file});
+        const t = try template.Template.parse(alloc, file.fullpath);
+        try templates.put(file.name, t);
+        if (try cmdline.create_adt_command(&app, t, alloc)) |command| {
+            try app.rootCommand().addSubcommand(command);
         }
     }
+
+    // var it = templates.iterator();
+    // while (it.next()) |entry| {
+    //     std.debug.print("{s}, {?}\n", .{ entry.key_ptr.*, entry.value_ptr.* });
+    // }
+
+    // 3. Cmdline parsing
+    // Parse the app struct and
+    // process the results
+    const matches = app.parseProcess() catch |e| {
+        std.debug.print("Error: {}\n", .{e});
+        std.process.exit(1);
+    };
+    const subcmd = matches.parse_result.subcmd_parse_result;
+    const name = subcmd.?.getCommand().deref().name;
+    const tplt = templates.get(name);
+    for (tplt.?.args.items) |*arg| {
+        // if we supplied the argument in question
+        if (subcmd.?.getArgs().get(arg.name)) |subcmd_arg| {
+            arg.value = subcmd_arg.single;
+        } else {
+            if (arg.def) |default| {
+                arg.value = default;
+            } else {
+                std.debug.print("Error: No default for {s}. Must supply --{s}\n", .{ arg.name, arg.name });
+                std.process.exit(1);
+            }
+        }
+    }
+    std.debug.print("{?}\n", .{tplt});
 }
