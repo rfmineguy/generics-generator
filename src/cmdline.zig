@@ -12,6 +12,8 @@ pub fn create_adt_command(app: *yazap.App, t: template.Template, alloc: std.mem.
         try command.addArg(Arg.singleValueOption(arg.name, arg.name[0], desc));
     }
 
+    try command.addArg(Arg.singleValueOption("outputdir", 'o', "default = ."));
+
     return command;
 }
 

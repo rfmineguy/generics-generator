@@ -16,7 +16,7 @@ const Allocator = std.mem.Allocator;
 ///
 pub const known_folders_config = .{ .xdg_on_mac = true };
 const alloc = std.heap.page_allocator;
-pub fn main() anyerror!void {
+pub fn main() anyerror!u8 {
     // 1. Create yazap app struct
     var app = App.init(alloc, "generics-gen", "Generics generator");
     defer app.deinit();
@@ -44,11 +44,12 @@ pub fn main() anyerror!void {
     // process the results into the final template values
     const matches = app.parseProcess() catch |e| {
         std.debug.print("Error: {}\n", .{e});
-        std.process.exit(1);
+        return 1;
     };
     const subcmd = matches.parse_result.subcmd_parse_result;
     const name = subcmd.?.getCommand().deref().name;
     const tplt = templates.get(name);
+    const output_dir = if (subcmd.?.getArgs().get("outputdir")) |out| out.single else ".";
     for (tplt.?.args.items) |*arg| {
         // if we supplied the argument in question
         if (subcmd.?.getArgs().get(arg.name)) |subcmd_arg| {
@@ -58,7 +59,7 @@ pub fn main() anyerror!void {
                 arg.value = default;
             } else {
                 std.debug.print("Error: No default for {s}. Must supply --{s}\n", .{ arg.name, arg.name });
-                std.process.exit(1);
+                return 3;
             }
         }
     }
@@ -87,5 +88,8 @@ pub fn main() anyerror!void {
 
         std.debug.print("Result: {s}\n", .{result});
         alloc.free(result);
+
+        std.debug.print("Outputdir: {s}\n", .{output_dir});
     }
+    return 0;
 }
