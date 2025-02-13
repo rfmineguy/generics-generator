@@ -18,7 +18,7 @@ const Arg = struct {
         try writer.print("symbol = {?s}, ", .{self.symbol});
         try writer.print("default = {?s}, ", .{self.def});
         try writer.print("value = {?s}, ", .{self.value});
-        try writer.print("}}", .{});
+        try writer.print("}}\n", .{});
     }
 };
 
