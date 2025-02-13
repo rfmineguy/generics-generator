@@ -63,7 +63,7 @@ pub fn main() anyerror!u8 {
             }
         }
     }
-    std.debug.print("{?}\n", .{tplt});
+    // std.debug.print("{?}\n", .{tplt});
 
     // 4. Use the data in tplt to do the replacements in the template files
     for (tplt.?.generators.items) |generator_file| {
@@ -73,10 +73,27 @@ pub fn main() anyerror!u8 {
         defer file.close();
         const stat = try file.stat();
         const contents = try file.readToEndAlloc(alloc, stat.size);
-        std.debug.print("{s}\n", .{path});
-        std.debug.print("{s}\n", .{contents});
 
         // 5. perform replacements
+        var output_filepath = try std.fs.path.join(alloc, &[_][]const u8{ output_dir, generator_file });
+
+        // 5a. remove tpl extension
+        output_filepath = if (std.mem.lastIndexOf(u8, output_filepath, "tpl")) |idx| output_filepath[0..idx] else output_filepath;
+
+        // 5b. add the datatype before the dot
+        if (std.mem.lastIndexOfScalar(u8, output_filepath, '.')) |loc| {
+            var result = try alloc.dupe(u8, tplt.?.outformat);
+            for (tplt.?.args.items) |arg| {
+                const old = arg.symbol;
+                const new = arg.value;
+                const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
+                alloc.free(result);
+                result = temp;
+            }
+            output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ output_dir, result, output_filepath[loc + 1 .. loc + 2] });
+        }
+
+        // 5c. create the final template string
         var result = try alloc.dupe(u8, contents);
         for (tplt.?.args.items) |arg| {
             const old = arg.symbol;
@@ -86,10 +103,15 @@ pub fn main() anyerror!u8 {
             result = temp;
         }
 
-        std.debug.print("Result: {s}\n", .{result});
-        alloc.free(result);
+        defer alloc.free(result);
+        defer alloc.free(output_filepath);
 
-        std.debug.print("Outputdir: {s}\n", .{output_dir});
+        const outfile = try std.fs.cwd().createFile(output_filepath, .{});
+        defer outfile.close();
+
+        outfile.writeAll(result) catch |e| {
+            std.debug.print("WriteError: {}\n", .{e});
+        };
     }
     return 0;
 }

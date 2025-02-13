@@ -27,6 +27,7 @@ pub const Template = struct {
     name: ?[]u8 = null,
     generators: std.ArrayList([]const u8) = undefined,
     args: std.ArrayList(Arg) = undefined,
+    outformat: []const u8 = undefined,
 
     pub fn parse(alloc: Allocator, path: []const u8) !@This() {
         var parser = try toml.parseFile(alloc, path);
@@ -49,6 +50,10 @@ pub const Template = struct {
                 const t = try alloc.dupe(u8, file.String);
                 try ret.generators.append(t);
             }
+        }
+        if (table.keys.get("outformat")) |outformat| {
+            if (outformat != .String) return error.malformed_outformat;
+            ret.outformat = try alloc.dupe(u8, outformat.String);
         }
         if (table.keys.get("args")) |arg| {
             if (arg != .Table) return error.malformed_args_table;
@@ -83,8 +88,9 @@ pub const Template = struct {
         }
         try writer.print("  ]\n", .{});
         try writer.print("  generators: [", .{});
-        for (self.generators.items) |generator| try writer.print("{s}, ", .{generator});
+        for (self.generators.items) |generator| try writer.print("{s},", .{generator});
         try writer.print("]\n", .{});
+        try writer.print("  outformat: {s},\n", .{self.outformat});
         try writer.print(")\n", .{});
     }
 };

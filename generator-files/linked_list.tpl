@@ -1,17 +1,14 @@
 name = "linked_list"
-files = ["linked_list.htpl", "linked_list.ctpl"]
-[args]
-	[datatype]
-		tplch = 'T'
-	[printf]
-		tplch = 'PRINT'
-		default = "printf"
-	[malloc]
-		tplch = 'MALLOC'
-		default = "malloc"
-	[calloc]
-		tplch = 'CALLOC'
-		default = "calloc"
-	[free]
-		tplch = 'FREE'
-		default = "free"
+generators = ["linked_list.htpl", "linked_list.ctpl"]
+outformat = "linked_list_T"
+
+[args.datatype]
+symbol = "T"
+
+[args.free]
+symbol = "FREE"
+default = "free"
+
+[args.print]
+symbol = "PRINT"
+default = "printf"
