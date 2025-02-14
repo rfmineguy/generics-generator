@@ -72,9 +72,20 @@ pub fn main() anyerror!u8 {
 
     // 4. Use the data in tplt to do the replacements in the template files
     for (tplt.?.generators.items) |generator_file| {
-        const home = try known_folders.getPath(alloc, .local_configuration) orelse "";
-        const path = try std.fs.path.join(alloc, &[_][]const u8{ home, "generics", generator_file });
-        var file = try std.fs.cwd().openFile(path, .{});
+        const template_search_path_var = "GEN_TEMPLATE_PATH";
+        const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
+        defer if (local_conf_path) |h| alloc.free(h);
+
+        const path = path: {
+            const template_search_path_val = std.process.getEnvVarOwned(alloc, template_search_path_var) catch {
+                if (local_conf_path) |local| break :path try std.fs.path.join(alloc, &[_][]const u8{ local, "generics", generator_file }) else return 6;
+            };
+            break :path try std.fs.realpathAlloc(alloc, try std.fs.path.join(alloc, &[_][]const u8{ template_search_path_val, generator_file }));
+        };
+        var file = std.fs.cwd().openFile(path, .{}) catch |err| {
+            std.debug.print("File path doesn't exist: {s}. Error: {?}\n", .{ path, err });
+            return 7;
+        };
         defer file.close();
         const stat = try file.stat();
         const contents = try file.readToEndAlloc(alloc, stat.size);

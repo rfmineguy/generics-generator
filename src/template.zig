@@ -104,7 +104,7 @@ pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile)
     const template_search_path_var = "GEN_TEMPLATE_PATH";
     const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
     // const default_search_path = try std.fs.path.join(alloc, &[_][]const u8{ local_conf_path, "generics" });
-    defer alloc.free(local_conf_path.?);
+    defer if (local_conf_path) |h| alloc.free(h);
     // defer alloc.free(default_search_path);
 
     const path = path: {
