@@ -45,9 +45,9 @@ void linked_list_T_pop(T);
 
 ## Making Them Work
 The default search path for template files is in the system's local configuration dir.
-`Linux: ~/.config/generics/`
-`MacOS: ~/.config/generics/`
-`Windows: %USERPROFILE%\AppData\Local\generics`
+- `Linux: ~/.config/generics/`
+- `MacOS: ~/.config/generics/`
+- `Windows: %USERPROFILE%\AppData\Local\generics`
 
 Generics Generator will look in this directory to determine what the available templates are, and will generate a special help menu for each template in that directory.
 
