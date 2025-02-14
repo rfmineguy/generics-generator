@@ -13,17 +13,25 @@ name = "linked_list"
 generators = ["linked_list.htpl", "linked_list.ctpl"]
 outformat = "linked_list_T"
 
-[args.datatype]
+[args.datatype]     # a required argument (no default available)
 symbol = "T"
 
-[args.free]
+[args.free]         # an optional argument (default supplied)
 symbol = "FREE"
 default = "free"
 
-[args.print]
+[args.print]        # an optional argument (default supplied)
 symbol = "PRINT"
 default = "printf"
 ```
+
+### Explanation
+- `name`        This field defines the name of the template in the cli
+- `generators`  This field defines all the generators associated with the template
+- `outformat`   This field defines the format of the files to be outputted
+- `args`        A table representing the template parameters
+    * `symbol`  The actual symbol that should be replaced with the supplied replacement
+    * `default` An optional field that specifies the default replacement in the event that the argument is not given
 
 ## Generator Files
 Generator files are the actual source code. They are just regular text files with your data structure's code in it. However when paired with the template file, you get some new features.
@@ -52,7 +60,7 @@ The default search path for template files is in the system's local configuratio
 Generics Generator will look in this directory to determine what the available templates are, and will generate a special help menu for each template in that directory.
 
 An example of what one might look like is:
-```sh
+```bash
 $ generics-generator --help
 Generics generator
 
@@ -62,7 +70,8 @@ Commands:
     linked_list
 ```
 
-```sh
+```bash
+$ generics-generator linked_list --help
 Usage: generics-gen linked_list [OPTIONS]
 
 Options:
@@ -72,3 +81,5 @@ Options:
     -o, --outputdir=<outputdir>                   default = .
     -h, --help                                    Print this help and exit
 ```
+
+Each of the options here correspond to the `args` that we specified in the `.tpl` file earlier
