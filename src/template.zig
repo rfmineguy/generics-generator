@@ -102,28 +102,36 @@ pub const TemplateFile = struct {
 
 pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile) {
     const template_search_path_var = "GEN_TEMPLATE_PATH";
-    const home = try known_folders.getPath(alloc, .local_configuration) orelse "";
+    const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
+    // const default_search_path = try std.fs.path.join(alloc, &[_][]const u8{ local_conf_path, "generics" });
+    defer alloc.free(local_conf_path.?);
+    // defer alloc.free(default_search_path);
 
-    const r = try std.fs.realpathAlloc(alloc, std.process.getEnvVarOwned(alloc, template_search_path_var) catch home);
+    const path = path: {
+        const template_search_path_val = std.process.getEnvVarOwned(alloc, template_search_path_var) catch {
+            if (local_conf_path) |local| break :path try std.fs.path.join(alloc, &[_][]const u8{ local, "generics" }) else break :path null;
+        };
+        break :path try std.fs.realpathAlloc(alloc, template_search_path_val);
+    };
 
-    const path = try std.fs.path.join(alloc, &[_][]const u8{ r, "generics" });
-    std.debug.print("Searching: {s}\n", .{path});
-    std.fs.cwd().makeDir(path) catch {};
+    std.debug.print("Searching: {?s}\n", .{path.?});
 
-    var dir = try std.fs.cwd().openDir(path, .{ .iterate = true });
+    var dir = std.fs.cwd().openDir(path.?, .{ .iterate = true }) catch |err| {
+        std.debug.print("Search path doesnt exist: {s}. Error: {?}\n", .{ path.?, err });
+        std.process.exit(5);
+    };
     defer dir.close();
 
-    var walker = try dir.walk(alloc);
-    defer walker.deinit();
+    var walker = dir.iterate();
 
     var filepaths = std.ArrayList(TemplateFile).init(alloc);
     while (try walker.next()) |entry| {
         if (entry.kind != .file) continue;
-        const extension = std.fs.path.extension(entry.path);
+        const extension = std.fs.path.extension(entry.name);
         if (std.mem.eql(u8, extension, ".tpl")) {
-            var basename = try alloc.dupe(u8, std.fs.path.basename(entry.path));
+            var basename = try alloc.dupe(u8, std.fs.path.basename(entry.name));
             try filepaths.append(.{
-                .fullpath = try dir.realpathAlloc(alloc, entry.path),
+                .fullpath = try dir.realpathAlloc(alloc, entry.name),
                 .name = if (std.mem.lastIndexOfScalar(u8, basename, '.')) |idx| basename[0..idx] else basename,
             });
         }
