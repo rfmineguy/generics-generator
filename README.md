@@ -89,3 +89,6 @@ Options:
 ```
 
 Each of the options here correspond to the `args` that we specified in the `.tpl` file earlier
+
+# Samples
+For tempalte samples see `generator-files`
