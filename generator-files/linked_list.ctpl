@@ -31,3 +31,34 @@ void ll_T_pushback(ll_T* ll, #T val) {
 		ll->tail = n;
 	}
 }
+
+void ll_T_pushfront(ll_T* ll, #T val) {
+	if (ll->head == NULL || ll->tail == NULL) {
+		ll->head = CALLOC(1, sizeof(ll_node_T));
+		ll->tail = ll->head;
+		ll->head->val = val;
+	}
+	else {
+		ll_node_T* n = CALLOC(1, sizeof(ll_node_T));
+		n->val = val;
+		ll->head->prev = n;
+		n->next = ll->head;
+		ll->head = n;
+	}
+}
+
+void ll_T_popback(ll_T* ll, #T val) {
+	ll_node_T* n = ll->tail;
+	if (!n) return;
+	ll->tail = ll->tail->prev;
+	ll->tail->next = 0;
+	FREE(n);
+}
+
+void ll_T_popfront(ll_T* ll, #T val) {
+	ll_node_T* n = ll->head;
+	if (!n) return;
+	ll->head = list->head->next;
+	ll->head->prev = 0;
+	FREE(n);
+}

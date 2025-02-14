@@ -14,5 +14,3 @@ void ll_T_pushback(ll_T*, #T);
 void ll_T_pushfront(ll_T*, #T);
 void ll_T_popback(ll_T*, #T);
 void ll_T_popfront(ll_T*, #T);
-#T   ll_T_peekback(ll_T*);
-#T   ll_T_peekfront(ll_T*);
