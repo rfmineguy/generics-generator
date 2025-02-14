@@ -107,6 +107,7 @@ pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile)
     const r = try std.fs.realpathAlloc(alloc, std.process.getEnvVarOwned(alloc, template_search_path_var) catch home);
 
     const path = try std.fs.path.join(alloc, &[_][]const u8{ r, "generics" });
+    std.debug.print("Searching: {s}\n", .{path});
     std.fs.cwd().makeDir(path) catch {};
 
     var dir = try std.fs.cwd().openDir(path, .{ .iterate = true });
