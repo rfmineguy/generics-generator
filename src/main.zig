@@ -102,11 +102,20 @@ pub fn main() anyerror!u8 {
         var result = try alloc.dupe(u8, contents);
         for (tplt.?.args.items) |arg| {
             const old = arg.symbol;
-            const new = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
-            const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
+            const old_w_hash = try std.fmt.allocPrint(alloc, "#{s}", .{old});
+            const new_underscored = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
+            const new = arg.value;
+            std.debug.print("{s}\n", .{new_underscored});
+            std.debug.print("{s}\n", .{new});
+
+            const temp = try std.mem.replaceOwned(u8, alloc, result, old_w_hash, new);
+            const temp2 = try std.mem.replaceOwned(u8, alloc, temp, old, new_underscored);
+
             alloc.free(result);
-            alloc.free(new);
-            result = temp;
+            alloc.free(new_underscored);
+            alloc.free(old_w_hash);
+            alloc.free(temp);
+            result = temp2;
         }
 
         defer alloc.free(result);
