@@ -12,3 +12,7 @@ default = "free"
 [args.print]
 symbol = "PRINT"
 default = "printf"
+
+[args.calloc]
+symbol = "CALLOC"
+default = "calloc"
