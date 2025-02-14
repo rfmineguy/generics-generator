@@ -89,9 +89,10 @@ pub fn main() anyerror!u8 {
             var result = try alloc.dupe(u8, tplt.?.outformat);
             for (tplt.?.args.items) |arg| {
                 const old = arg.symbol;
-                const new = arg.value;
+                const new = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
                 const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
                 alloc.free(result);
+                alloc.free(new);
                 result = temp;
             }
             output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ output_dir, result, output_filepath[loc + 1 .. loc + 2] });
@@ -101,9 +102,10 @@ pub fn main() anyerror!u8 {
         var result = try alloc.dupe(u8, contents);
         for (tplt.?.args.items) |arg| {
             const old = arg.symbol;
-            const new = arg.value;
+            const new = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
             const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
             alloc.free(result);
+            alloc.free(new);
             result = temp;
         }
 
