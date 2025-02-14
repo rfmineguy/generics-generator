@@ -47,15 +47,47 @@ The main new feature is being able to use keywords as "find and replace" tokens.
 Example:
 ```c
 // This is the generator file
-typedef struct linked_list_T {
-    T value;
-    linked_list_T* next;
-} linked_list_T;
+typedef struct ll_node_T {
+	#T val;
+	struct ll_node_T *next, *prev;
+} ll_node_T;
 
-void linked_list_T_push(T);
-void linked_list_T_pop(T);
-... etc
+typedef struct {
+	int size;
+	struct ll_node_T *head, *tail;
+} ll_T;
+
+void linked_list_T_push(ll_T*, #T);
+void linked_list_T_pop(ll_T*, #T);
 ```
+
+### Explanation
+Notice we have two different symbols in here with the same name `T`. This is because the hash symbol causes the symbol to be replaced differently!<br>
+<br>
+When you use a symbol with no hash symbol, the it will be replaced with the supplied string with the spaces replaced with underscores.<br>
+If you add a hash, the replacement will keep the spaces intact.<br>
+<br>
+For example if we ran Generics Generator as such.<br>
+```bash
+$ generics-generator linked_list --datatype="long double"
+```
+We would get
+```c
+// This is the generator file
+typedef struct ll_node_long_double {
+	long double val;
+	struct ll_node_long_double *next, *prev;
+} ll_node_long_double;
+
+typedef struct {
+	int size;
+	struct ll_node_long_double *head, *tail;
+} ll_long_double;
+
+void linked_list_long_double_push(ll_long_double*, long double);
+void linked_list_long_double_pop(ll_long_double*, long double);
+```
+
 
 ## Making Them Work
 The default search path for template **and** generator files is in the system's local configuration dir.
