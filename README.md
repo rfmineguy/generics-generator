@@ -96,6 +96,10 @@ The default search path for template **and** generator files is in the system's 
 - `Windows: %USERPROFILE%\AppData\Local\generics`
 
 Generics Generator will look in this directory to determine what the available templates are, and will generate a special help menu for each template in that directory.
+To override this default you can run the program as such
+```bash
+export GEN_TEMPLATE_PATH=.; generics-generator <args>
+```
 
 An example of what one might look like is:
 ```bash
