@@ -46,13 +46,17 @@ pub fn main() anyerror!u8 {
         std.debug.print("Error: {}\n", .{e});
         return 1;
     };
-    const subcmd = matches.parse_result.subcmd_parse_result;
-    const name = subcmd.?.getCommand().deref().name;
+    const subcmd = if (matches.parse_result.subcmd_parse_result) |result| result else {
+        std.debug.print("Error: no arg provided\n", .{});
+        try app.displayHelp();
+        return 2;
+    };
+    const name = subcmd.getCommand().deref().name;
     const tplt = templates.get(name);
-    const output_dir = if (subcmd.?.getArgs().get("outputdir")) |out| out.single else ".";
+    const output_dir = if (subcmd.getArgs().get("outputdir")) |out| out.single else ".";
     for (tplt.?.args.items) |*arg| {
         // if we supplied the argument in question
-        if (subcmd.?.getArgs().get(arg.name)) |subcmd_arg| {
+        if (subcmd.getArgs().get(arg.name)) |subcmd_arg| {
             arg.value = subcmd_arg.single;
         } else {
             if (arg.def) |default| {
