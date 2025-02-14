@@ -1,5 +1,6 @@
 #include "linked_list_T.h"
 #include <stddef.h>
+#include <stdlib.h>
 
 ll_T ll_T_new() {
 	return (ll_T) {0};
@@ -16,7 +17,7 @@ void ll_T_free(ll_T* ll) {
 	ll->tail = 0;
 }
 
-void ll_T_pushback(ll_T* ll, T val) {
+void ll_T_pushback(ll_T* ll, #T val) {
 	if (ll->head == NULL || ll->tail == NULL) {
 		ll->head = CALLOC(1, sizeof(ll_node_T));
 		ll->tail = ll->head;

@@ -1,6 +1,6 @@
 typedef struct ll_node_T {
 	#T val;
-	ll_node_T *next, *prev;
+	struct ll_node_T *next, *prev;
 } ll_node_T;
 
 typedef struct {
