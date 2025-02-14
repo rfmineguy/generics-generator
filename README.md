@@ -52,7 +52,7 @@ void linked_list_T_pop(T);
 ```
 
 ## Making Them Work
-The default search path for template files is in the system's local configuration dir.
+The default search path for template **and** generator files is in the system's local configuration dir.
 - `Linux: ~/.config/generics/`
 - `MacOS: ~/.config/generics/`
 - `Windows: %USERPROFILE%\AppData\Local\generics`
