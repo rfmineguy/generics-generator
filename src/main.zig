@@ -17,6 +17,7 @@ const Allocator = std.mem.Allocator;
 pub const known_folders_config = .{ .xdg_on_mac = true };
 const alloc = std.heap.page_allocator;
 pub fn main() anyerror!u8 {
+
     // 1. Create yazap app struct
     var app = App.init(alloc, "generics-gen", "Generics generator");
     defer app.deinit();

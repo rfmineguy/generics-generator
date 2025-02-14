@@ -101,8 +101,12 @@ pub const TemplateFile = struct {
 };
 
 pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile) {
+    const template_search_path_var = "GEN_TEMPLATE_PATH";
     const home = try known_folders.getPath(alloc, .local_configuration) orelse "";
-    const path = try std.fs.path.join(alloc, &[_][]const u8{ home, "generics" });
+
+    const r = try std.fs.realpathAlloc(alloc, std.process.getEnvVarOwned(alloc, template_search_path_var) catch home);
+
+    const path = try std.fs.path.join(alloc, &[_][]const u8{ r, "generics" });
     std.fs.cwd().makeDir(path) catch {};
 
     var dir = try std.fs.cwd().openDir(path, .{ .iterate = true });
