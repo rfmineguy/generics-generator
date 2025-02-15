@@ -88,6 +88,15 @@ void linked_list_long_double_push(ll_long_double*, long double);
 void linked_list_long_double_pop(ll_long_double*, long double);
 ```
 
+## Support Files
+Now what if we want some custom functionality that is type dependent? Printing to the console, for instance, is very type dependent.<br>
+Well this is where **support files** come in to the picture.<br>
+<br>
+You may write a template in a way that uses a type specific function that isn't in the template, and this function is required for the code to compile.<br>
+<br>
+A support file essentially is a file that directly implements those type specific functions, and can be included in the template.<br>
+
+You can find an example of this in the `templates` folder
 
 ## Making Them Work
 The default search path for template **and** generator files is in the system's local configuration dir.
