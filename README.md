@@ -96,7 +96,7 @@ You may write a template in a way that uses a type specific function that isn't 
 <br>
 A support file essentially is a file that directly implements those type specific functions, and can be included in the template.<br>
 
-You can find an example of this in the `templates` folder of the demo repo [demo](https://github.com/rfmineguy/generics-generator-demo.git)
+You can find an example of this in the `templates` folder of the demo folder [demo](demo)
 
 ## Making Them Work
 The default search path for template **and** generator files is in the system's local configuration dir.
