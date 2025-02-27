@@ -131,7 +131,11 @@ pub fn main() anyerror!u8 {
         defer alloc.free(result);
         defer alloc.free(output_filepath);
 
-        const outfile = try std.fs.cwd().createFile(output_filepath, .{});
+        const outfile = std.fs.cwd().createFile(output_filepath, .{}) catch |err| {
+            std.debug.print("Error: Failed to create {s}, as the path is not accessible", .{output_filepath});
+            std.debug.print("       {}", .{err});
+            continue;
+        };
         defer outfile.close();
 
         outfile.writeAll(result) catch |e| {
