@@ -137,3 +137,4 @@ Each of the options here correspond to the `args` that we specified in the `.tpl
 
 # Samples
 For template samples see `generator-files`
+For full examples of how it can integrate into a Makefile setup, see `demo`
