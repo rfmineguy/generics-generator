@@ -69,9 +69,9 @@ If you add a hash, the replacement will keep the spaces intact.<br>
 <br>
 For example if we ran Generics Generator as such.<br>
 ```bash
-$ generics-generator linked_list --datatype="long double"
+$ generics-generator linked_list --datatype="long double" --outputdir=.
 ```
-We would get
+We would get the following file in the cwd
 ```c
 // This is the generator file
 typedef struct ll_node_long_double {
