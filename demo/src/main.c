@@ -1,8 +1,7 @@
 #include <stdio.h>
-#include "linked_list_vec2.h"
-#include "linked_list_int.h"
-
-#include "binary_tree_int.h"
+#include "generated/linked_list_vec2.h"
+#include "generated/linked_list_int.h"
+#include "generated/binary_tree_int.h"
 
 int main() {
 	printf("=======================\n");
