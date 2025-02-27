@@ -1,0 +1,77 @@
+#include "binary_tree_X.h"
+#include "binary_tree_X_spec.c"
+#include <stdlib.h>
+#include <stdio.h>
+
+/**
+ *    User is required to implement a few select functions in their own spec file
+ *    	- bt_X_compare(X, X)
+ *    		+ return 0 on equal
+ *    		+ return -1 on less
+ *    		+ return 1 on greater
+ *    	- bt_X_node_print(X)
+ *    		+ you decide how to print the node data
+ */
+
+int bt_X_compare(#X, #X);
+void bt_X_node_print(#X);
+
+// Helper functions
+void bt_X_insert_node_rec(binary_tree_node_X** n, #X val) {
+	if (!(*n)) {
+		(*n) = CALLOC(1, sizeof(binary_tree_node_X));
+		(*n)->val = val;
+		return;
+	}
+	if ((*n) && bt_X_compare(val, (*n)->val) < 0) bt_X_insert_node_rec(&(*n)->left, val);
+	if ((*n) && bt_X_compare(val, (*n)->val) >= 0) bt_X_insert_node_rec(&(*n)->right, val);
+}
+
+void bt_X_delete_node_rec(binary_tree_node_X** n, #X val) {
+	if (!(*n)) {
+		return;
+	}
+	if ((*n)->val == val) {
+		// traverse right of left to replace n
+		binary_tree_node_X* t = (*n)->left;
+		while (t->right) t = t->right;
+		(*n)->val = t->val;
+		FREE(t);
+	}
+	if (val > (*n)->val) {
+		bt_X_delete_node_rec(&(*n)->right, val);
+	}
+	else {
+		bt_X_delete_node_rec(&(*n)->left, val);
+	}
+}
+
+/*
+┗4
+ ┗5
+  ┗5
+ ┗6
+*/
+void bt_X_print_rec(binary_tree_node_X* n, int depth) {
+	if (!n) {
+		PRINT("%*.c\\_ NULL\n", depth * 3, ' '); 
+		return;
+	}
+	PRINT("%*.c\\_ ", depth * 3, ' '); bt_X_node_print(n->val); PRINT("\n");
+	bt_X_print_rec(n->left, depth + 1);
+	bt_X_print_rec(n->right, depth + 1);
+}
+
+// Main public functions
+binary_tree_X bt_X_new() {
+	return (binary_tree_X) {0};
+}
+void bt_X_insert(binary_tree_X* bt, #X val) {
+	bt_X_insert_node_rec(&bt->root, val);
+}
+void bt_X_delete(binary_tree_X* bt, #X val) {
+	bt_X_delete_node_rec(&bt->root, val);
+}
+void bt_X_print(binary_tree_X* bt) {
+	bt_X_print_rec(bt->root, 0);
+}

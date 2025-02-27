@@ -1,0 +1,19 @@
+#ifndef BINARY_TREE_X_H
+#define BINARY_TREE_X_H
+#include "HEADER_INCLUDE"
+
+typedef struct binary_tree_node_X {
+	#X val;
+	struct binary_tree_node_X *left, *right;
+} binary_tree_node_X;
+
+typedef struct binary_tree_X {
+	struct binary_tree_node_X *root;
+} binary_tree_X;
+
+binary_tree_X bt_X_new();
+void 					bt_X_insert(binary_tree_X*, #X);
+void 					bt_X_delete(binary_tree_X*, #X);
+void 					bt_X_print(binary_tree_X*);
+
+#endif
