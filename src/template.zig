@@ -6,20 +6,40 @@ const Allocator = std.mem.Allocator;
 
 const ArgType = enum { symbol, def };
 const Arg = struct {
-    name: []const u8 = undefined,
-    symbol: []const u8 = undefined,
+    name: ?[]const u8 = null,
+    symbol: ?[]const u8 = null,
     def: ?[]const u8 = null,
-    value: []const u8 = undefined,
+    value: ?[]const u8 = null,
 
     pub fn format(self: @This(), comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("   {s} {{", .{self.name});
+        try writer.print("   {?s} {{", .{self.name});
         try writer.print("symbol = {?s}, ", .{self.symbol});
         try writer.print("default = {?s}, ", .{self.def});
         try writer.print("value = {?s}, ", .{self.value});
         try writer.print("}}\n", .{});
     }
+};
+
+pub const TemplateParseError = error{
+    toml_parse_error,
+
+    // Name errors
+    name_malformed,
+    name_missing,
+    // generator array errors
+    generators_array_malformed,
+    generators_array_missing,
+    // outformat errors
+    outformat_malformed,
+    outformat_missing,
+    // args table malformed
+    args_table_malformed,
+    args_table_missing,
+    // arg entry malformed
+    arg_malformed,
+    arg_symbol_missing,
 };
 
 // represents <adt>.tpl
@@ -38,38 +58,52 @@ pub const Template = struct {
 
         var ret = @This(){};
         ret.args = std.ArrayList(Arg).init(alloc);
+
+        // Parse the template name field
         if (table.keys.get("name")) |name| {
-            if (name != .String) return error.malformed_name;
+            if (name != .String) return error.name_malformed;
             ret.name = try alloc.dupe(u8, name.String);
+        } else {
+            return error.name_missing;
         }
         if (table.keys.get("generators")) |generators| {
-            if (generators != .Array) return error.malformed_generators_array;
+            if (generators != .Array) return error.generators_array_malformed;
             ret.generators = std.ArrayList([]const u8).init(alloc);
             for (generators.Array.items) |file| {
                 if (file != .String) continue;
                 const t = try alloc.dupe(u8, file.String);
                 try ret.generators.append(t);
             }
+        } else {
+            return error.generators_array_missing;
         }
         if (table.keys.get("outformat")) |outformat| {
-            if (outformat != .String) return error.malformed_outformat;
+            if (outformat != .String) return error.outformat_malformed;
             ret.outformat = try alloc.dupe(u8, outformat.String);
+        } else {
+            return error.outformat_missing;
         }
         if (table.keys.get("args")) |arg| {
-            if (arg != .Table) return error.malformed_args_table;
+            if (arg != .Table) return error.args_table_malformed;
             var args_it = arg.Table.keys.iterator();
             while (args_it.next()) |entry| {
-                if (entry.value_ptr.* != .Table) return error.malformed_arg;
+                if (entry.value_ptr.* != .Table) return error.arg_malformed;
                 const arg_entry_table = entry.value_ptr.Table;
                 var arg_entry_it = arg_entry_table.keys.iterator();
                 var argument: Arg = .{};
                 argument.name = try alloc.dupe(u8, entry.key_ptr.*);
                 while (arg_entry_it.next()) |arg_entry| {
-                    if (arg_entry.value_ptr.* != .String) return error.malformed_arg;
-                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "symbol"))
+                    if (arg_entry.value_ptr.* != .String) return error.arg_malformed;
+                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "symbol")) {
                         argument.symbol = try alloc.dupe(u8, arg_entry.value_ptr.String);
-                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "default"))
+                    }
+                    if (std.mem.eql(u8, arg_entry.key_ptr.*, "default")) {
                         argument.def = try alloc.dupe(u8, arg_entry.value_ptr.String);
+                    }
+                }
+
+                if (argument.symbol) |_| {} else {
+                    return error.arg_symbol_missing;
                 }
                 try ret.args.append(argument);
             }
@@ -114,7 +148,7 @@ pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile)
         break :path try std.fs.realpathAlloc(alloc, template_search_path_val);
     };
 
-    std.debug.print("Searching: {?s}\n", .{path.?});
+    // std.debug.print("Searching: {?s}\n", .{path.?});
 
     var dir = std.fs.cwd().openDir(path.?, .{ .iterate = true }) catch |err| {
         std.debug.print("Search path doesnt exist: {s}. Error: {?}\n", .{ path.?, err });
@@ -138,3 +172,10 @@ pub fn get_template_files(alloc: std.mem.Allocator) !std.ArrayList(TemplateFile)
     }
     return filepaths;
 }
+
+// =====================
+// TESTS FROM HERE BELOW
+// =====================
+const expect = std.testing.expect;
+
+test "template parse 1" {}
