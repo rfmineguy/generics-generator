@@ -33,7 +33,10 @@ pub fn main() anyerror!u8 {
         alloc.free(file.name);
     };
     for (files.items) |file| {
-        const t = try template.Template.parse(alloc, file.fullpath);
+        const t = template.Template.parse(alloc, file.fullpath) catch |err| {
+            std.debug.print("{}\n", .{err});
+            return 0;
+        };
         try templates.put(file.name, t);
         if (try cmdline.create_adt_command(&app, t, alloc)) |command| {
             try app.rootCommand().addSubcommand(command);
@@ -57,13 +60,13 @@ pub fn main() anyerror!u8 {
     const output_dir = if (subcmd.getArgs().get("outputdir")) |out| out.single else ".";
     for (tplt.?.args.items) |*arg| {
         // if we supplied the argument in question
-        if (subcmd.getArgs().get(arg.name)) |subcmd_arg| {
+        if (subcmd.getArgs().get(arg.name.?)) |subcmd_arg| {
             arg.value = subcmd_arg.single;
         } else {
             if (arg.def) |default| {
                 arg.value = default;
             } else {
-                std.debug.print("Error: No default for {s}. Must supply --{s}\n", .{ arg.name, arg.name });
+                std.debug.print("Error: No default for {?s}. Must supply --{?s}\n", .{ arg.name, arg.name });
                 return 3;
             }
         }
@@ -100,8 +103,8 @@ pub fn main() anyerror!u8 {
         if (std.mem.lastIndexOfScalar(u8, output_filepath, '.')) |loc| {
             var result = try alloc.dupe(u8, tplt.?.outformat);
             for (tplt.?.args.items) |arg| {
-                const old = arg.symbol;
-                const new = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
+                const old = arg.symbol.?;
+                const new = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
                 const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
                 alloc.free(result);
                 alloc.free(new);
@@ -113,10 +116,10 @@ pub fn main() anyerror!u8 {
         // 4c. create the final template string
         var result = try alloc.dupe(u8, contents);
         for (tplt.?.args.items) |arg| {
-            const old = arg.symbol;
+            const old = arg.symbol.?;
             const old_w_hash = try std.fmt.allocPrint(alloc, "#{s}", .{old});
-            const new_underscored = try std.mem.replaceOwned(u8, alloc, arg.value, " ", "_");
-            const new = arg.value;
+            const new_underscored = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
+            const new = arg.value.?;
 
             const temp = try std.mem.replaceOwned(u8, alloc, result, old_w_hash, new);
             const temp2 = try std.mem.replaceOwned(u8, alloc, temp, old, new_underscored);
