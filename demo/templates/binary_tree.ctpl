@@ -40,16 +40,13 @@ void bt_X_delete_node_rec(binary_tree_node_X** n, #X val) {
 	if (bt_X_compare((*n)->val, val) == 0) {
 		// check node type
 		if (!(*n)->left && !(*n)->right) {
-			printf("leaf [%d]\n", val);
 			// leaf node
 			FREE(*n);
 			(*n) = 0;
 			return;
 		}
 		if (!(*n)->left && (*n)->right) {
-			printf("right, no left [%d]\n", val);
 			// has right, no left
-			binary_tree_node_X** t = n;
 			binary_tree_node_X** largest = bt_X_get_largest_rec(&(*n)->right);
 			(*n)->val = (*largest)->val;
 			FREE(*largest);
@@ -57,7 +54,6 @@ void bt_X_delete_node_rec(binary_tree_node_X** n, #X val) {
 			return;
 		}
 		if (!(*n)->right && (*n)->left) {
-			printf("left, no right [%d]\n", val);
 			// has left, no right
 			binary_tree_node_X** largest = bt_X_get_largest_rec(&(*n)->left);
 			(*n)->val = (*largest)->val;
@@ -104,7 +100,7 @@ binary_tree_node_X* bt_X_find_by_val(binary_tree_node_X* n, #X val) {
 	if (bt_X_compare(n->val, val) == 0) {
 		return n;
 	}
-	if (n->val < val) return bt_X_find_by_val(n->left, val);
+	if (bt_X_compare(n->val, val) < 0) return bt_X_find_by_val(n->left, val);
 	return bt_X_find_by_val(n->right, val);
 }
 
