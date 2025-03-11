@@ -11,9 +11,11 @@ typedef struct binary_tree_X {
 	struct binary_tree_node_X *root;
 } binary_tree_X;
 
-binary_tree_X bt_X_new();
-void 					bt_X_insert(binary_tree_X*, #X);
-void 					bt_X_delete(binary_tree_X*, #X);
-void 					bt_X_print(binary_tree_X*);
+binary_tree_X 		  bt_X_new();
+void 							  bt_X_insert(binary_tree_X*, #X);
+void 							  bt_X_delete(binary_tree_X*, #X);
+binary_tree_node_X* bt_X_find(binary_tree_X*, #X);
+void 						 	  bt_X_print(binary_tree_X*);
+void 						  	bt_X_free(binary_tree_X*);
 
 #endif

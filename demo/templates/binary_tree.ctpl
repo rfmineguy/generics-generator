@@ -27,18 +27,54 @@ void bt_X_insert_node_rec(binary_tree_node_X** n, #X val) {
 	if ((*n) && bt_X_compare(val, (*n)->val) >= 0) bt_X_insert_node_rec(&(*n)->right, val);
 }
 
+binary_tree_node_X** bt_X_get_largest_rec(binary_tree_node_X** n) {
+	binary_tree_node_X** largest = n;
+	while ((*largest) && (*largest)->right) largest = &(*largest)->right;
+	return largest;
+}
+
 void bt_X_delete_node_rec(binary_tree_node_X** n, #X val) {
 	if (!(*n)) {
 		return;
 	}
-	if ((*n)->val == val) {
-		// traverse right of left to replace n
-		binary_tree_node_X* t = (*n)->left;
-		while (t->right) t = t->right;
-		(*n)->val = t->val;
-		FREE(t);
+	if (bt_X_compare((*n)->val, val) == 0) {
+		// check node type
+		if (!(*n)->left && !(*n)->right) {
+			printf("leaf [%d]\n", val);
+			// leaf node
+			FREE(*n);
+			(*n) = 0;
+			return;
+		}
+		if (!(*n)->left && (*n)->right) {
+			printf("right, no left [%d]\n", val);
+			// has right, no left
+			binary_tree_node_X** t = n;
+			binary_tree_node_X** largest = bt_X_get_largest_rec(&(*n)->right);
+			(*n)->val = (*largest)->val;
+			FREE(*largest);
+			*largest = 0;
+			return;
+		}
+		if (!(*n)->right && (*n)->left) {
+			printf("left, no right [%d]\n", val);
+			// has left, no right
+			binary_tree_node_X** largest = bt_X_get_largest_rec(&(*n)->left);
+			(*n)->val = (*largest)->val;
+			FREE(*largest);
+			*largest = 0;
+			return;
+		}
+		if ((*n)->left && (*n)->right) {
+			// has left and right
+			binary_tree_node_X** largest = bt_X_get_largest_rec(&(*n)->left);
+			(*n)->val = (*largest)->val;
+			FREE(*largest);
+			*largest = 0;
+			return;
+		}
 	}
-	if (val > (*n)->val) {
+	if (bt_X_compare((*n)->val, val) < 0) {
 		bt_X_delete_node_rec(&(*n)->right, val);
 	}
 	else {
@@ -46,12 +82,6 @@ void bt_X_delete_node_rec(binary_tree_node_X** n, #X val) {
 	}
 }
 
-/*
-┗4
- ┗5
-  ┗5
- ┗6
-*/
 void bt_X_print_rec(binary_tree_node_X* n, int depth) {
 	if (!n) {
 		PRINT("%*.c\\_ NULL\n", depth * 3, ' '); 
@@ -60,6 +90,22 @@ void bt_X_print_rec(binary_tree_node_X* n, int depth) {
 	PRINT("%*.c\\_ ", depth * 3, ' '); bt_X_node_print(n->val); PRINT("\n");
 	bt_X_print_rec(n->left, depth + 1);
 	bt_X_print_rec(n->right, depth + 1);
+}
+
+void bt_X_free_node(binary_tree_node_X* node) {
+	if (node == 0) return;
+	bt_X_free_node(node->left);
+	bt_X_free_node(node->right);
+	free(node);
+}
+
+binary_tree_node_X* bt_X_find_by_val(binary_tree_node_X* n, #X val) {
+	if (n == (void*)0) return (void*)0;
+	if (bt_X_compare(n->val, val) == 0) {
+		return n;
+	}
+	if (n->val < val) return bt_X_find_by_val(n->left, val);
+	return bt_X_find_by_val(n->right, val);
 }
 
 // Main public functions
@@ -72,6 +118,12 @@ void bt_X_insert(binary_tree_X* bt, #X val) {
 void bt_X_delete(binary_tree_X* bt, #X val) {
 	bt_X_delete_node_rec(&bt->root, val);
 }
+binary_tree_node_X* bt_X_find(binary_tree_X* bt, #X val) {
+	return bt_X_find_by_val(bt->root, val);
+}
 void bt_X_print(binary_tree_X* bt) {
 	bt_X_print_rec(bt->root, 0);
+}
+void bt_X_free(binary_tree_X* bt) {
+	bt_X_free_node(bt->root);
 }
