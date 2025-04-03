@@ -6,7 +6,8 @@
     //
     // It is redundant to include "zig" in this name because it is already
     // within the Zig package namespace.
-    .name = "generics-generator",
+    .name = .generics_generator,
+    .fingerprint = 0x501ca9f00d1ff5ab,
 
     // This is a [Semantic Version](https://semver.org/).
     // In a future version of Zig it will be used for package deduplication.
@@ -23,12 +24,9 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        .zig_toml = .{ .path = "./libs/zig-toml/" },
-        .@"known-folders" = .{
-            .url = "git+https://github.com/ziglibs/known-folders.git#1cceeb70e77dec941a4178160ff6c8d05a74de6f",
-            .hash = "12205f5e7505c96573f6fc5144592ec38942fb0a326d692f9cddc0c7dd38f9028f29",
-        },
+        .toml = .{ .path = "./libs/zig-toml/" },
         .yazap = .{ .path = "./libs/yazap/" },
+        .knownfolders = .{ .path = "./libs/knownfolders" },
     },
     .paths = .{
         "build.zig",

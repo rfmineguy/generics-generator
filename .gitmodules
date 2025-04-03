@@ -1,3 +1,6 @@
 [submodule "libs/zig-toml"]
 	path = libs/zig-toml
 	url = https://github.com/stef/zig-toml.git
+[submodule "libs/knownfolders"]
+	path = libs/knownfolders
+	url = https://github.com/ziglibs/known-folders.git
