@@ -36,8 +36,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const toml_dep = b.dependency("toml", .{}).module("zig-toml");
-    exe.root_module.addImport("toml", toml_dep);
+    const toml_dep = b.dependency("tomlz", .{}).module("tomlz");
+    exe.root_module.addImport("tomlz", toml_dep);
 
     const known_folders = b.dependency("knownfolders", .{}).module("known-folders");
     exe.root_module.addImport("knownfolders", known_folders);

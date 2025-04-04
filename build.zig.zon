@@ -24,9 +24,9 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        .toml = .{ .path = "./libs/zig-toml/" },
+        .tomlz = .{ .path = "libs/tomlz/" },
         .yazap = .{ .path = "./libs/yazap/" },
-        .knownfolders = .{ .path = "./libs/knownfolders" },
+        .knownfolders = .{ .path = "./libs/knownfolders/" },
     },
     .paths = .{
         "build.zig",
