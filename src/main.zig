@@ -24,7 +24,6 @@ pub fn main() anyerror!u8 {
     var app = App.init(alloc, "generics-gen", "Generics generator");
     defer app.deinit();
 
-    // 2. Cmdline setup
     // Populate yazap app with
     // commands parsed from the config
     // dir

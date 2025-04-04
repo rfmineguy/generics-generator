@@ -47,10 +47,10 @@ pub const Dependency = struct {
     forwardTo: []const u8,
     forwardArgs: std.StringHashMap([]const u8),
 
-    pub fn from(name: []const u8, forwardTo: []const u8, alloc: std.mem.Allocator) @This() {
+    pub fn from(name: []const u8, alloc: std.mem.Allocator) @This() {
         return @This(){
             .name = name,
-            .forwardTo = forwardTo,
+            .forwardTo = "",
             .forwardArgs = .init(alloc),
         };
     }
@@ -159,19 +159,16 @@ pub const Template = struct {
         while (it.next()) |entry| {
             if (std.mem.eql(u8, entry.key_ptr.*, "name")) {
                 if (entry.value_ptr.* != .String) return error.name_malformed;
-                // std.debug.print("name = {s}\n", .{entry.value_ptr.*.String});
                 ret.name = try alloc.dupe(u8, entry.value_ptr.*.String);
             }
             if (std.mem.eql(u8, entry.key_ptr.*, "generators")) {
                 if (entry.value_ptr.* != .Array) return error.generators_array_malformed;
                 for (entry.value_ptr.*.Array) |v| {
-                    // std.debug.print("generator = {s}\n", .{v.String});
                     try ret.generators.append(try alloc.dupe(u8, v.String));
                 }
             }
             if (std.mem.eql(u8, entry.key_ptr.*, "outformat")) {
                 if (entry.value_ptr.* != .String) return error.outformat_malformed;
-                // std.debug.print("outformat = {s}\n", .{entry.value_ptr.*.String});
                 ret.outformat = try alloc.dupe(u8, entry.value_ptr.*.String);
             }
             if (std.mem.eql(u8, entry.key_ptr.*, "deps")) {
@@ -179,11 +176,12 @@ pub const Template = struct {
                 var tit = entry.value_ptr.*.Table.iterator();
                 while (tit.next()) |deptable| {
                     if (deptable.value_ptr.* != .Table) return error.dep_table_malformed;
+                    var dep = Dependency.from(try alloc.dupe(u8, deptable.key_ptr.*), alloc);
                     var deptit = deptable.value_ptr.*.Table.iterator();
                     while (deptit.next()) |deptittable| {
-                        //std.debug.print("dep = {s} - {s}\n", .{ deptittable.key_ptr.*, deptittable.value_ptr.*.String });
-                        try ret.deps.append(Dependency.from(try alloc.dupe(u8, deptittable.key_ptr.*), try alloc.dupe(u8, deptittable.value_ptr.*.String), alloc));
+                        try dep.forwardArgs.put(try alloc.dupe(u8, deptittable.key_ptr.*), try alloc.dupe(u8, deptittable.value_ptr.*.String));
                     }
+                    try ret.deps.append(dep);
                 }
             }
             if (std.mem.eql(u8, entry.key_ptr.*, "args")) {
@@ -229,11 +227,12 @@ pub const Template = struct {
         try writer.print("]\n", .{});
         try writer.print("  deps: [\n", .{});
         for (self.deps.items) |dep| {
-            try writer.print("Dep(name={s}),", .{dep.name});
+            try writer.print("Dep(name={s},\n", .{dep.name});
             var it = dep.forwardArgs.iterator();
             while (it.next()) |arg| {
                 try writer.print("arg={s}->{s}\n", .{ arg.key_ptr.*, arg.value_ptr.* });
             }
+            try writer.print(")\n", .{});
         }
         try writer.print("  ],\n", .{});
         try writer.print("  outformat: {s},\n", .{self.outformat});
