@@ -1,0 +1,75 @@
+#include "linked_list_T.h"
+#include "linked_list_support_T.c"
+#include <stddef.h>
+#include <stdlib.h>
+
+ll_T ll_T_new() {
+	return (ll_T) {0};
+}
+
+void ll_T_free(ll_T* ll) {
+	ll_node_T* n = ll->head;
+	while (n) {
+		ll_node_T* t = n;
+		n = n->next;
+			FREE(t);
+	}
+	ll->head = 0;
+	ll->tail = 0;
+}
+
+void ll_T_pushback(ll_T* ll, #T val) {
+	if (ll->head == NULL || ll->tail == NULL) {
+		ll->head = CALLOC(1, sizeof(ll_node_T));
+		ll->tail = ll->head;
+		ll->head->val = val;
+	}
+	else {
+		ll_node_T* n = CALLOC(1, sizeof(ll_node_T));
+		n->val = val;
+		ll->tail->next = n;
+		n->prev = ll->tail;
+		ll->tail = n;
+	}
+}
+
+void ll_T_pushfront(ll_T* ll, #T val) {
+	if (ll->head == NULL || ll->tail == NULL) {
+		ll->head = CALLOC(1, sizeof(ll_node_T));
+		ll->tail = ll->head;
+		ll->head->val = val;
+	}
+	else {
+		ll_node_T* n = CALLOC(1, sizeof(ll_node_T));
+		n->val = val;
+		ll->head->prev = n;
+		n->next = ll->head;
+		ll->head = n;
+	}
+}
+
+void ll_T_popback(ll_T* ll, #T val) {
+	ll_node_T* n = ll->tail;
+	if (!n) return;
+	ll->tail = ll->tail->prev;
+	ll->tail->next = 0;
+	FREE(n);
+}
+
+void ll_T_popfront(ll_T* ll, #T val) {
+	ll_node_T* n = ll->head;
+	if (!n) return;
+	ll->head = ll->head->next;
+	ll->head->prev = 0;
+	FREE(n);
+}
+
+void ll_T_print(ll_T* ll) {
+	ll_node_T* n = ll->head;
+	while (n) {
+		ll_T_node_print(n->val);
+		PRINT(" -> ");
+		n = n->next;
+	}
+	PRINT("\n");
+}

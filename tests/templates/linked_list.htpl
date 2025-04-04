@@ -1,0 +1,23 @@
+#ifndef LL_T
+#define LL_T
+#include "HEADER_INCLUDE"
+
+typedef struct ll_node_T {
+	#T val;
+	struct ll_node_T *next, *prev;
+} ll_node_T;
+
+typedef struct {
+	int size;
+	struct ll_node_T *head, *tail;
+} ll_T;
+
+ll_T ll_T_new();
+void ll_T_free(ll_T*);
+void ll_T_pushback(ll_T*, #T);
+void ll_T_pushfront(ll_T*, #T);
+void ll_T_popback(ll_T*, #T);
+void ll_T_popfront(ll_T*, #T);
+void ll_T_print(ll_T*);
+
+#endif

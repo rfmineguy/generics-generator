@@ -1,5 +1,5 @@
 const std = @import("std");
-const known_folders = @import("known-folders");
+const known_folders = @import("knownfolders");
 const template = @import("template.zig");
 const yazap = @import("yazap");
 const cmdline = @import("cmdline.zig");
@@ -14,7 +14,9 @@ const Allocator = std.mem.Allocator;
 ///     dynamically populated based on
 ///     config dir
 ///
-pub const known_folders_config = .{ .xdg_on_mac = true };
+pub const known_folders_config: known_folders.KnownFolderConfig = .{
+    .xdg_on_mac = true,
+};
 const alloc = std.heap.page_allocator;
 pub fn main() anyerror!u8 {
 
@@ -27,20 +29,23 @@ pub fn main() anyerror!u8 {
     // commands parsed from the config
     // dir
     var templates = std.StringHashMap(template.Template).init(alloc);
-    const files = try template.get_template_files(alloc);
+    const files = template.get_template_files(alloc) catch |err| {
+        std.debug.print("Error: {}\n", .{err});
+        return 4;
+    };
     defer for (files.items) |file| {
         alloc.free(file.fullpath);
         alloc.free(file.name);
     };
     for (files.items) |file| {
+        // std.debug.print("file: {}\n", .{file});
         const t = template.Template.parse(alloc, file.fullpath) catch |err| {
-            std.debug.print("{}\n", .{err});
+            std.debug.print("Failed to parse '{s}.tpl': Reason: {any}\n", .{ file.name, err });
             return 0;
         };
         try templates.put(file.name, t);
-        if (try cmdline.create_adt_command(&app, t, alloc)) |command| {
-            try app.rootCommand().addSubcommand(command);
-        }
+        const cmd = try cmdline.create_adt_command(&app, t, alloc);
+        try app.rootCommand().addSubcommand(cmd);
     }
 
     // 3. Cmdline parsing
@@ -71,10 +76,11 @@ pub fn main() anyerror!u8 {
             }
         }
     }
-    // std.debug.print("{?}\n", .{tplt});
+    std.debug.print("Selected template\n", .{});
 
     // 4. Use the data in tplt to do the replacements in the template files
     for (tplt.?.generators.items) |generator_file| {
+        std.debug.print("{s}\n", .{generator_file});
         const template_search_path_var = "GEN_TEMPLATE_PATH";
         const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
         defer if (local_conf_path) |h| alloc.free(h);
@@ -93,6 +99,7 @@ pub fn main() anyerror!u8 {
         const stat = try file.stat();
         const contents = try file.readToEndAlloc(alloc, stat.size);
 
+        std.debug.print("Figure out the output filepath\n", .{});
         // perform replacements
         var output_filepath = try std.fs.path.join(alloc, &[_][]const u8{ output_dir, generator_file });
 
@@ -112,6 +119,8 @@ pub fn main() anyerror!u8 {
             }
             output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ output_dir, result, output_filepath[loc + 1 .. loc + 2] });
         }
+
+        std.debug.print("Begin generation of file\n", .{});
 
         // 4c. create the final template string
         var result = try alloc.dupe(u8, contents);
