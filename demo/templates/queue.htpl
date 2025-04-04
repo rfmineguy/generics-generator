@@ -1,0 +1,16 @@
+#ifndef QUEUE_T_H
+#define QUEUE_T_H
+#include "linked_list_T.h"
+#include "HEADER_INCLUDE"
+
+typedef struct queue_T {
+	#T* data;
+} queue_T;
+
+queue_T queue_T_new(int);
+void 		queue_T_free(queue_T*);
+void    queue_T_enqueue(queue_T*, #T);
+#T 	    queue_T_dequeue(queue_T*);
+#T      queue_T_peek(queue_T*);
+
+#endif

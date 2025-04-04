@@ -64,6 +64,15 @@ void ll_int_popfront(ll_int* ll, int val) {
 	free(n);
 }
 
+void ll_int_delete(ll_int* ll, int val) {
+	ll_node_int* n = ll->head;
+	while (n && ll_int_cmp(n->val, val) != 0) n = n->next;
+	if (n) {
+		n->prev->next = n->next;
+		free(n);
+	}
+}
+
 void ll_int_print(ll_int* ll) {
 	ll_node_int* n = ll->head;
 	while (n) {

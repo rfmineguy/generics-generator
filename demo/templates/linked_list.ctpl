@@ -64,6 +64,15 @@ void ll_T_popfront(ll_T* ll, #T val) {
 	FREE(n);
 }
 
+void ll_T_delete(ll_T* ll, #T val) {
+	ll_node_T* n = ll->head;
+	while (n && ll_T_cmp(n->val, val) != 0) n = n->next;
+	if (n) {
+		n->prev->next = n->next;
+		FREE(n);
+	}
+}
+
 void ll_T_print(ll_T* ll) {
 	ll_node_T* n = ll->head;
 	while (n) {

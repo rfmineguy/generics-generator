@@ -1,0 +1,24 @@
+#ifndef HASH_TABLE_$KEY_$VAL_H
+#define HASH_TABLE_$KEY_$VAL_H
+#include <stdbool.h>
+
+typedef struct ht_node_$KEY_$VAL {
+	struct ht_node_$KEY_$VAL* next;
+	#^KEY key;
+	#^VAL val;
+} ht_node_$KEY_$VAL;
+
+typedef struct ht_$KEY_$VAL {
+	struct ht_node_$KEY_$VAL* buckets[BUCKETCOUNT];
+	int bucket_count;
+} ht_$KEY_$VAL;
+
+ht_$KEY_$VAL ht_$KEY_$VAL_create();
+void 			 	 ht_$KEY_$VAL_put(ht_$KEY_$VAL*, #^KEY, #^VAL);
+void 			 	 ht_$KEY_$VAL_remove(ht_$KEY_$VAL*, #^KEY);
+bool 				 ht_$KEY_$VAL_contains_key(ht_$KEY_$VAL*, #^KEY);
+bool 				 ht_$KEY_$VAL_contains_val(ht_$KEY_$VAL*, #^VAL);
+#^VAL* 		   ht_$KEY_$VAL_get(ht_$KEY_$VAL*, #^KEY);
+void 				 ht_$KEY_$VAL_print(ht_$KEY_$VAL*);
+
+#endif

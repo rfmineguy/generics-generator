@@ -18,6 +18,7 @@ void ll_vec2_pushback(ll_vec2*, vec2);
 void ll_vec2_pushfront(ll_vec2*, vec2);
 void ll_vec2_popback(ll_vec2*, vec2);
 void ll_vec2_popfront(ll_vec2*, vec2);
+void ll_vec2_delete(ll_vec2*, vec2);
 void ll_vec2_print(ll_vec2*);
 
 #endif

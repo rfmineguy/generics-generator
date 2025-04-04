@@ -1,0 +1,21 @@
+#ifndef VECTOR_T_H
+#define VECTOR_T_H
+#include "HEADER_INCLUDE"
+
+typedef struct vec_T {
+	#T *data;
+	int capacity, size;
+} vec_T;
+
+vec_T vec_T_create();
+void vec_T_reserve  (vec_T*, int);
+void vec_T_pushback (vec_T*, T);
+void vec_T_pushfront(vec_T*, T);
+void vec_T_popback  (vec_T*);
+void vec_T_popfront (vec_T*);
+T 	 vec_T_peekfront(vec_T*);
+T 	 vec_T_peekback (vec_T*);
+void vec_T_print    (vec_T*);
+T*   vec_T_get 			(vec_T*, T);
+
+#endif

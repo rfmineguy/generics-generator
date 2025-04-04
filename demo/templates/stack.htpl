@@ -1,0 +1,18 @@
+#ifndef STACK_X_H
+#define STACK_X_H
+#include "HEADER_INCLUDE"
+
+typedef struct stack_X {
+	#X* data;
+	int top;
+	int capacity;
+} stack_X;
+
+stack_X  		stack_X_new(int);
+void 				stack_X_free(stack_X*);
+void 				stack_X_push(stack_X*, #X);
+#X 					stack_X_peek(stack_X*);
+#X 					stack_X_pop(stack_X*);
+foid 				stack_X_print(stack_X*);
+
+#endif

@@ -64,6 +64,15 @@ void ll_vec2_popfront(ll_vec2* ll, vec2 val) {
 	free(n);
 }
 
+void ll_vec2_delete(ll_vec2* ll, vec2 val) {
+	ll_node_vec2* n = ll->head;
+	while (n && ll_vec2_cmp(n->val, val) != 0) n = n->next;
+	if (n) {
+		n->prev->next = n->next;
+		free(n);
+	}
+}
+
 void ll_vec2_print(ll_vec2* ll) {
 	ll_node_vec2* n = ll->head;
 	while (n) {

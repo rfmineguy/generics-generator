@@ -18,6 +18,7 @@ void ll_int_pushback(ll_int*, int);
 void ll_int_pushfront(ll_int*, int);
 void ll_int_popback(ll_int*, int);
 void ll_int_popfront(ll_int*, int);
+void ll_int_delete(ll_int*, int);
 void ll_int_print(ll_int*);
 
 #endif

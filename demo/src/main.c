@@ -3,6 +3,8 @@
 #include "generated/linked_list_int.h"
 #include "generated/binary_tree_vec2.h"
 #include "generated/binary_tree_int.h"
+#include "generated/hash_table_string_int.h"
+#include "generated/stack_int.h"
 
 int main() {
 	printf("=======================\n");
@@ -79,4 +81,48 @@ int main() {
 	}
 
 	bt_vec2_free(&bt2);
+
+
+	printf("========================\n");
+	printf(" HashTable<String, Int>\n");
+	printf("========================\n");
+	ht_string_int ht = ht_string_int_create();
+	ht_string_int_put(&ht, "test", 5);
+	ht_string_int_put(&ht, "player_health", 5);
+	ht_string_int_put(&ht, "enemy_health", 5);
+	ht_string_int_put(&ht, "pottery", 5);
+	ht_string_int_put(&ht, "general_health", 5);
+	ht_string_int_put(&ht, "username", 5);
+	ht_string_int_put(&ht, "lockwood", 5);
+	ht_string_int_put(&ht, "razer", 5);
+	ht_string_int_put(&ht, "montana", 5);
+
+	ht_string_int_remove(&ht, "montana");
+	ht_string_int_remove(&ht, "lockwood");
+
+	printf("contains 'montana': %s\n", 
+			ht_string_int_contains_key(&ht, "montana") ? "Yes":"No"
+	);
+	printf("contains 'hi': %s\n", 
+			ht_string_int_contains_key(&ht, "hi") ? "Yes":"No"
+	);
+
+	*ht_string_int_get(&ht, "pottery") = 3;
+	ht_string_int_print(&ht);
+
+
+	printf("========================\n");
+	printf(" HashTable<String, Int>\n");
+	printf("========================\n");
+	stack_int stack = stack_int_new(10);
+	stack_int_push(&stack, 3);
+	stack_int_push(&stack, 5);
+	stack_int_push(&stack, 7);
+	stack_int_push(&stack, 8);
+	stack_int_print(&stack);
+
+	printf("========================\n");
+	stack_int_pop(&stack);
+	stack_int_pop(&stack);
+	stack_int_print(&stack);
 }

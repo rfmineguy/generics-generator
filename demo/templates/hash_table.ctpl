@@ -1,0 +1,112 @@
+#include "hash_table_$KEY_$VAL.h"
+#include "hash_table_$KEY_$VAL_support.c"
+#include <stdlib.h>
+#include <stdio.h>
+
+/**
+ *    User is required to implement a few select functions in their own spec file
+ *    	- ht_$KEY_$VAL_compare_key(KEY, KEY)
+ *    		+ return 0 on equal
+ *    		+ return -1 on less
+ *    		+ return 1 on greater
+ *    	- ht_$KEY_$VAL_compare_val(VAL, VAL)
+ *    		+ return 0 on equal
+ *    		+ return -1 on less
+ *    		+ return 1 on greater
+ *    	- ht_$KEY_$VAL_node_print(VAL)
+ *    		+ you decide how to print the node data
+ *    	- ht_$KEY_$VAL_hash(KEY)
+ *    		+ you decide how to generate a hash for the key
+ */
+
+ht_$KEY_$VAL ht_$KEY_$VAL_create() {
+	ht_$KEY_$VAL ht = {0};
+	ht.bucket_count = BUCKETCOUNT;
+	return ht;
+}
+void ht_$KEY_$VAL_put(ht_$KEY_$VAL* ht, #^KEY key, #^VAL val) {
+	// generate hash and node
+	int hash = ht_$KEY_$VAL_hash(key, ht->bucket_count);
+	ht_node_$KEY_$VAL* node = CALLOC(1, sizeof(ht_node_$KEY_$VAL));
+	node->key = key;
+	node->val = val;
+
+	// put the value into the right bucket
+	if (ht->buckets[hash] == (void*)0) {
+		ht->buckets[hash] = node;
+		return;
+	}
+	else {
+		ht_node_$KEY_$VAL* t = ht->buckets[hash];
+		ht->buckets[hash] = node;
+		node->next = t;
+		return;
+	}
+}
+void ht_$KEY_$VAL_remove(ht_$KEY_$VAL* ht, #^KEY key) {
+	int hash = ht_$KEY_$VAL_hash(key, ht->bucket_count);
+	if (ht->buckets[hash] == (void*)0) return;
+	ht_node_$KEY_$VAL* prev = 0;
+	ht_node_$KEY_$VAL* t = ht->buckets[hash];
+	while (t && ht_$KEY_$VAL_compare_key(key, t->key) != 0) {
+		prev = t;
+		t = t->next;
+	}
+	if (t && prev) {
+		prev->next = t->next;
+		FREE(t);
+	}
+	if (t && !prev) {
+		ht->buckets[hash] = t->next;
+		FREE(t);
+	}
+}
+bool ht_$KEY_$VAL_contains_key(ht_$KEY_$VAL* ht, #^KEY key) {
+	int hash = ht_$KEY_$VAL_hash(key, ht->bucket_count);
+	if (ht->buckets[hash] == (void*)0) return false;
+	ht_node_$KEY_$VAL* n = ht->buckets[hash];
+	while (n) {
+		if (ht_$KEY_$VAL_compare_key(n->key, key) == 0) {
+			return true;
+		}
+		n = n->next;
+	}
+	return false;
+}
+bool ht_$KEY_$VAL_contains_val(ht_$KEY_$VAL* ht, #^VAL val) {
+	for (int i = 0; i < BUCKETCOUNT; i++) {
+		if (!ht->buckets[i]) continue;
+		ht_node_$KEY_$VAL* n = ht->buckets[i];
+		while (n) {
+			if (ht_$KEY_$VAL_compare_val(n->val, val) == 0) {
+				return true;
+			}
+			n = n->next;
+		}
+	}
+	return false;
+}
+#^VAL* ht_$KEY_$VAL_get(ht_$KEY_$VAL* ht, #^KEY key) {
+	int hash = ht_$KEY_$VAL_hash(key, ht->bucket_count);
+	if (ht->buckets[hash] == (void*)0) return false;
+	ht_node_$KEY_$VAL* n = ht->buckets[hash];
+	while (n) {
+		if (ht_$KEY_$VAL_compare_key(n->key, key) == 0) {
+			return &n->val;
+		}
+		n = n->next;
+	}
+	return (void*)0;
+}
+void ht_$KEY_$VAL_print(ht_$KEY_$VAL* ht) {
+	for (int i = 0; i < BUCKETCOUNT; i++) {
+		if (!ht->buckets[i]) continue;
+		ht_node_$KEY_$VAL* n = ht->buckets[i];
+		PRINT("%d  ::  ", i);
+		while (n) {
+			ht_$KEY_$VAL_node_print(n); PRINT(" -> ");
+			n = n->next;
+		}
+		PRINT("\n");
+	}
+}

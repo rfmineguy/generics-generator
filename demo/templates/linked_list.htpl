@@ -18,6 +18,7 @@ void ll_T_pushback(ll_T*, #T);
 void ll_T_pushfront(ll_T*, #T);
 void ll_T_popback(ll_T*, #T);
 void ll_T_popfront(ll_T*, #T);
+void ll_T_delete(ll_T*, #T);
 void ll_T_print(ll_T*);
 
 #endif
