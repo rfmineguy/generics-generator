@@ -3,6 +3,7 @@ const known_folders = @import("knownfolders");
 const template = @import("template.zig");
 const yazap = @import("yazap");
 const cmdline = @import("cmdline.zig");
+const generator = @import("generator.zig");
 
 const App = yazap.App;
 const Allocator = std.mem.Allocator;
@@ -24,9 +25,9 @@ pub fn main() anyerror!u8 {
     var app = App.init(alloc, "generics-gen", "Generics generator");
     defer app.deinit();
 
-    // Populate yazap app with
-    // commands parsed from the config
-    // dir
+    // 2. Populate yazap app with commands parsed from the config dir
+    //    a. Retrieve template files based on the search path
+    //    b. Generate yazap commands based on the retrieved template files
     var templates = std.StringHashMap(template.Template).init(alloc);
     const files = template.get_template_files(alloc) catch |err| {
         std.debug.print("Error: {}\n", .{err});
@@ -37,7 +38,6 @@ pub fn main() anyerror!u8 {
         alloc.free(file.name);
     };
     for (files.items) |file| {
-        // std.debug.print("file: {}\n", .{file});
         const t = template.Template.parse(alloc, file.fullpath) catch |err| {
             std.debug.print("Failed to parse '{s}.tpl': Reason: {any}\n", .{ file.name, err });
             return 0;
@@ -78,80 +78,82 @@ pub fn main() anyerror!u8 {
     std.debug.print("Selected template\n", .{});
 
     // 4. Use the data in tplt to do the replacements in the template files
-    for (tplt.?.generators.items) |generator_file| {
-        std.debug.print("{s}\n", .{generator_file});
-        const template_search_path_var = "GEN_TEMPLATE_PATH";
-        const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
-        defer if (local_conf_path) |h| alloc.free(h);
+    //   NOTE: This should be abstracted to support the dependency generation
+    generator.generateTemplate(alloc, tplt.?, output_dir);
+    // for (tplt.?.generators.items) |generator_file| {
+    //     std.debug.print("{s}\n", .{generator_file});
+    //     const template_search_path_var = "GEN_TEMPLATE_PATH";
+    //     const local_conf_path = try known_folders.getPath(alloc, .local_configuration);
+    //     defer if (local_conf_path) |h| alloc.free(h);
 
-        const path = path: {
-            const template_search_path_val = std.process.getEnvVarOwned(alloc, template_search_path_var) catch {
-                if (local_conf_path) |local| break :path try std.fs.path.join(alloc, &[_][]const u8{ local, "generics", generator_file }) else return 6;
-            };
-            break :path try std.fs.realpathAlloc(alloc, try std.fs.path.join(alloc, &[_][]const u8{ template_search_path_val, generator_file }));
-        };
-        var file = std.fs.cwd().openFile(path, .{}) catch |err| {
-            std.debug.print("File path doesn't exist: {s}. Error: {?}\n", .{ path, err });
-            return 7;
-        };
-        defer file.close();
-        const stat = try file.stat();
-        const contents = try file.readToEndAlloc(alloc, stat.size);
+    //     const path = path: {
+    //         const template_search_path_val = std.process.getEnvVarOwned(alloc, template_search_path_var) catch {
+    //             if (local_conf_path) |local| break :path try std.fs.path.join(alloc, &[_][]const u8{ local, "generics", generator_file }) else return 6;
+    //         };
+    //         break :path try std.fs.realpathAlloc(alloc, try std.fs.path.join(alloc, &[_][]const u8{ template_search_path_val, generator_file }));
+    //     };
+    //     var file = std.fs.cwd().openFile(path, .{}) catch |err| {
+    //         std.debug.print("File path doesn't exist: {s}. Error: {?}\n", .{ path, err });
+    //         return 7;
+    //     };
+    //     defer file.close();
+    //     const stat = try file.stat();
+    //     const contents = try file.readToEndAlloc(alloc, stat.size);
 
-        std.debug.print("Figure out the output filepath\n", .{});
-        // perform replacements
-        var output_filepath = try std.fs.path.join(alloc, &[_][]const u8{ output_dir, generator_file });
+    //     std.debug.print("Figure out the output filepath\n", .{});
+    //     // perform replacements
+    //     var output_filepath = try std.fs.path.join(alloc, &[_][]const u8{ output_dir, generator_file });
 
-        // 4a. remove tpl extension
-        output_filepath = if (std.mem.lastIndexOf(u8, output_filepath, "tpl")) |idx| output_filepath[0..idx] else output_filepath;
+    //     // 4a. remove tpl extension
+    //     output_filepath = if (std.mem.lastIndexOf(u8, output_filepath, "tpl")) |idx| output_filepath[0..idx] else output_filepath;
 
-        // 4b. add the datatype before the dot
-        if (std.mem.lastIndexOfScalar(u8, output_filepath, '.')) |loc| {
-            var result = try alloc.dupe(u8, tplt.?.outformat);
-            for (tplt.?.args.items) |arg| {
-                const old = arg.symbol.?;
-                const new = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
-                const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
-                alloc.free(result);
-                alloc.free(new);
-                result = temp;
-            }
-            output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ output_dir, result, output_filepath[loc + 1 .. loc + 2] });
-        }
+    //     // 4b. add the datatype before the dot
+    //     if (std.mem.lastIndexOfScalar(u8, output_filepath, '.')) |loc| {
+    //         var result = try alloc.dupe(u8, tplt.?.outformat);
+    //         for (tplt.?.args.items) |arg| {
+    //             const old = arg.symbol.?;
+    //             const new = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
+    //             const temp = try std.mem.replaceOwned(u8, alloc, result, old, new);
+    //             alloc.free(result);
+    //             alloc.free(new);
+    //             result = temp;
+    //         }
+    //         output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ output_dir, result, output_filepath[loc + 1 .. loc + 2] });
+    //     }
 
-        std.debug.print("Begin generation of file\n", .{});
+    //     std.debug.print("Begin generation of file\n", .{});
 
-        // 4c. create the final template string
-        var result = try alloc.dupe(u8, contents);
-        for (tplt.?.args.items) |arg| {
-            const old = arg.symbol.?;
-            const old_w_hash = try std.fmt.allocPrint(alloc, "#{s}", .{old});
-            const new_underscored = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
-            const new = arg.value.?;
+    //     // 4c. create the final template string
+    //     var result = try alloc.dupe(u8, contents);
+    //     for (tplt.?.args.items) |arg| {
+    //         const old = arg.symbol.?;
+    //         const old_w_hash = try std.fmt.allocPrint(alloc, "#{s}", .{old});
+    //         const new_underscored = try std.mem.replaceOwned(u8, alloc, arg.value.?, " ", "_");
+    //         const new = arg.value.?;
 
-            const temp = try std.mem.replaceOwned(u8, alloc, result, old_w_hash, new);
-            const temp2 = try std.mem.replaceOwned(u8, alloc, temp, old, new_underscored);
+    //         const temp = try std.mem.replaceOwned(u8, alloc, result, old_w_hash, new);
+    //         const temp2 = try std.mem.replaceOwned(u8, alloc, temp, old, new_underscored);
 
-            alloc.free(result);
-            alloc.free(new_underscored);
-            alloc.free(old_w_hash);
-            alloc.free(temp);
-            result = temp2;
-        }
+    //         alloc.free(result);
+    //         alloc.free(new_underscored);
+    //         alloc.free(old_w_hash);
+    //         alloc.free(temp);
+    //         result = temp2;
+    //     }
 
-        defer alloc.free(result);
-        defer alloc.free(output_filepath);
+    //     defer alloc.free(result);
+    //     defer alloc.free(output_filepath);
 
-        const outfile = std.fs.cwd().createFile(output_filepath, .{}) catch |err| {
-            std.debug.print("Error: Failed to create {s}, as the path is not accessible\n", .{output_filepath});
-            std.debug.print("       {}\n", .{err});
-            continue;
-        };
-        defer outfile.close();
+    //     const outfile = std.fs.cwd().createFile(output_filepath, .{}) catch |err| {
+    //         std.debug.print("Error: Failed to create {s}, as the path is not accessible\n", .{output_filepath});
+    //         std.debug.print("       {}\n", .{err});
+    //         continue;
+    //     };
+    //     defer outfile.close();
 
-        outfile.writeAll(result) catch |e| {
-            std.debug.print("WriteError: {}\n", .{e});
-        };
-    }
+    //     outfile.writeAll(result) catch |e| {
+    //         std.debug.print("WriteError: {}\n", .{e});
+    //     };
+    // }
     return 0;
 }
