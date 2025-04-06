@@ -132,6 +132,13 @@ pub const Template = struct {
         };
     }
 
+    pub fn getArgMutByName(self: @This(), name: []const u8) ?*Arg {
+        for (self.args.items) |*arg| {
+            if (std.mem.eql(u8, arg.name.?, name)) return arg;
+        }
+        return null;
+    }
+
     pub fn parse(alloc: Allocator, path: []const u8) !@This() {
         const src = try std.fs.cwd().readFileAlloc(alloc, path, std.math.maxInt(u32));
 
