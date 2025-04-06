@@ -54,7 +54,7 @@ fn runGenerator(alloc: std.mem.Allocator, _template: template.Template, genFile:
         output_filepath = try std.fmt.allocPrint(alloc, "{s}/{s}.{s}", .{ outdir, result, output_filepath[loc + 1 .. loc + 2] });
     }
 
-    std.debug.print("Begin generation of file\n", .{});
+    std.debug.print("Begin generation of file: {s}\n", .{output_filepath});
 
     // 4c. create the final template string
     var result = try alloc.dupe(u8, contents);
@@ -89,11 +89,50 @@ fn runGenerator(alloc: std.mem.Allocator, _template: template.Template, genFile:
     return 0;
 }
 
-pub fn generateTemplate(alloc: std.mem.Allocator, _template: template.Template, output_dir: []const u8) void {
+// NOTE: We need to populate the argument values based on what the user want to forward
+//       I wonder if we can ask yazap to do some of the heavier lifting
+pub fn forwardTemplateArgValues(dependency: template.Dependency, forwardFromTemplate: template.Template, forwardToTemplate: *template.Template) u8 {
+    var it = dependency.forwardArgs.iterator();
+    while (it.next()) |forwardArg| {
+        if (forwardToTemplate.getArgMutByName(forwardArg.key_ptr.*)) |argp| {
+            if (argp.value) |_| continue;
+            if (std.mem.eql(u8, argp.name.?, forwardArg.key_ptr.*)) {
+                argp.value = forwardFromTemplate.getArgMutByName(forwardArg.value_ptr.*).?.value;
+            } else if (argp.def) |default| {
+                argp.value = default;
+            } else {
+                std.debug.print("Error: No default for {?s}. Must supply --{?s}\n", .{ argp.name, argp.name });
+                return 3;
+            }
+        }
+    }
+    return 0;
+}
+
+var generatedTemplates: ?std.StringHashMap(void) = null;
+
+pub fn generateTemplate(alloc: std.mem.Allocator, _template: template.Template, available_templates: *const std.StringHashMap(template.Template), output_dir: []const u8) !void {
+    if (generatedTemplates == null) {
+        generatedTemplates = .init(alloc);
+    }
+    std.debug.print("Generating... {}\n", .{_template});
     for (_template.generators.items) |genFile| {
         // const path = getGeneratorTemplatePath(alloc, genFile);
         _ = runGenerator(alloc, _template, genFile, output_dir) catch |err| {
             std.debug.print("Error: {}\n", .{err});
         };
+        try generatedTemplates.?.put(_template.name, {});
+    }
+    for (_template.deps.items) |dep| {
+        if (generatedTemplates.?.contains(dep.name)) continue;
+
+        if (available_templates.getPtr(dep.name)) |t| {
+            std.debug.print("before forward => {}\n", .{t.*});
+            _ = forwardTemplateArgValues(dep, _template, t);
+            std.debug.print("forwarded => {}\n", .{t.*});
+            try generateTemplate(alloc, t.*, available_templates, output_dir);
+        } else {
+            std.debug.print("Error: Dependency {s} not present\n", .{dep.name});
+        }
     }
 }
